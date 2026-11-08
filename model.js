@@ -140,11 +140,12 @@ function atMinutes(day, mins) {
 function floorToMinute(ms) { const d = new Date(ms); d.setSeconds(0, 0); return d.getTime(); }
 
 // ---------------------------------------------------------------------------------
-// Formatting. Day and month names follow the phone's language (French phone → French).
+// Formatting. Day/month names and the decimal separator follow the language chosen
+// in Settings (currentLocale() in i18n.js), e.g. "Dim. 8 nov." and "14,95" in French.
 // ---------------------------------------------------------------------------------
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-const fmtDate = (d, opts) => d.toLocaleDateString(undefined, opts);
+const fmtDate = (d, opts) => d.toLocaleDateString(currentLocale(), opts);
 
 /** Epoch millis → "09:30". */
 function fmtTime(ms) { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
@@ -155,12 +156,19 @@ function fmtMinutes(m) { return `${Math.floor(m / 60)}h${pad2(m % 60)}`; }
 /** "Sat 8 Nov" (order and names follow the phone's language). */
 function fmtDay(ms) { return capitalize(fmtDate(new Date(ms), { weekday: "short", day: "numeric", month: "short" })); }
 
-/** Amount → "95,00 €" (decimal separator follows the phone's language). */
-const moneyFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-function money(x, currency) { return `${moneyFormat.format(x)} ${currency}`.trim(); }
+/** Amount → "95,00 €" (decimal separator follows the chosen language). */
+function money(x, currency) {
+  const n = x.toLocaleString(currentLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${n} ${currency}`.trim();
+}
 
-/** Rate → text for an input field ("" when the rate is 0, so the field shows empty). */
-function fmtRate(r) { return r === 0 ? "" : r.toFixed(2); }
+/** Rate → text for an input field: "14,95" or "14.95" depending on the language
+ *  ("" when the rate is 0, so the field shows empty). */
+function fmtRate(r) {
+  if (r === 0) return "";
+  const decimalSep = (1.5).toLocaleString(currentLocale()).charAt(1);
+  return r.toFixed(2).replace(".", decimalSep);
+}
 
 /** Parses "14.95" or "14,95" → 14.95; returns null if it's not a number. */
 function parseDecimal(s) {

@@ -95,7 +95,7 @@ function renderHome() {
 
   $("emptyMsg").hidden = inPeriod.length > 0;
   $("shiftList").innerHTML = inPeriod.map((s) => {
-    const brk = s.breakMinutes > 0 ? ` · ${s.breakMinutes}m break` : "";
+    const brk = s.breakMinutes > 0 ? ` · ${escapeHtml(t("breakInfo", s.breakMinutes))}` : "";
     const note = s.note ? `<span class="muted note">${escapeHtml(s.note)}</span>` : "";
     return `<li><button class="card shift" data-id="${s.id}">
       <div class="shift-main">
@@ -115,14 +115,14 @@ function renderHome() {
 function renderClock() {
   const active = settings.activeStart;
   $("clockCard").innerHTML = active == null
-    ? `<p class="clock-label">Not clocked in</p>
-       <button class="btn filled big" data-action="clockIn">Clock in</button>`
-    : `<p class="clock-label active">Clocked in at ${fmtTime(active)}</p>
+    ? `<p class="clock-label">${t("notClockedIn")}</p>
+       <button class="btn filled big" data-action="clockIn">${t("clockIn")}</button>`
+    : `<p class="clock-label active">${t("clockedInAt", fmtTime(active))}</p>
        <p class="timer" id="timer"></p>
        <p class="so-far" id="soFar"></p>
        <div class="row">
-         <button class="btn outlined big" data-action="discard">${confirmDiscard ? "Tap to confirm" : "Discard"}</button>
-         <button class="btn danger-filled big" data-action="clockOut">Clock out</button>
+         <button class="btn outlined big" data-action="discard">${t(confirmDiscard ? "confirmDiscard" : "discard")}</button>
+         <button class="btn danger-filled big" data-action="clockOut">${t("clockOut")}</button>
        </div>`;
   tick();
 }
@@ -177,16 +177,16 @@ function openDialog(shift) {
   const st = shift ? new Date(shift.start) : null;
   const en = shift ? new Date(shift.end) : null;
   const hhmm = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  $("dlgTitle").textContent = shift ? "Edit shift" : "Add shift";
+  $("dlgTitle").textContent = t(shift ? "editShift" : "addShift");
   $("fDate").value = toISODate(st ?? new Date());
   $("fStart").value = st ? hhmm(st) : "09:00"; // ► your usual start/end for new shifts
   $("fEnd").value = en ? hhmm(en) : "17:00";
   $("fBreak").value = String(shift ? shift.breakMinutes : settings.defaultBreak);
   $("fRate").value = fmtRate(shift ? shift.rate : settings.rate);
   $("fNote").value = shift?.note ?? "";
-  $("fRateLabel").textContent = `Rate (${settings.currency}/h)`;
+  $("fRateLabel").textContent = t("rate", settings.currency);
   $("fDelete").hidden = !shift;
-  $("fDelete").textContent = "Delete shift";
+  $("fDelete").textContent = t("deleteShift");
   updateDialog();
   dlg.showModal();
 }
@@ -218,10 +218,10 @@ function readForm() {
 /** Refreshes the "(next day)" label, the red rate field, the preview and the Save button. */
 function updateDialog() {
   const r = readForm();
-  $("fEndLabel").textContent = "End" + (r.overnight ? " (next day)" : "");
+  $("fEndLabel").textContent = t(r.overnight ? "endNextDay" : "end");
   $("fRate").classList.toggle("invalid", !r.rateOk);
   $("fPreview").textContent = r.valid
-    ? `Worked ${fmtMinutes(workedMinutes(r.shift))} · ${money(earnings(r.shift), settings.currency)}`
+    ? t("worked", fmtMinutes(workedMinutes(r.shift)), money(earnings(r.shift), settings.currency))
     : "";
   $("fSave").disabled = !r.valid;
 }
@@ -243,7 +243,7 @@ $("fCancel").addEventListener("click", () => dlg.close());
 // Tapping the dark area outside the dialog closes it.
 dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
 $("fDelete").addEventListener("click", () => {
-  if (!confirmDelete) { confirmDelete = true; $("fDelete").textContent = "Tap again to delete"; return; }
+  if (!confirmDelete) { confirmDelete = true; $("fDelete").textContent = t("confirmDelete"); return; }
   deleteShift(editing.id);
   dlg.close();
   renderHome();
@@ -253,18 +253,26 @@ $("fDelete").addEventListener("click", () => {
 // Settings screen (each change is saved immediately; there is no Save button)
 // ---------------------------------------------------------------------------------
 function fillSettings() {
+  $("setLanguage").value = lang;
   $("setRate").value = fmtRate(settings.rate);
   $("setRate").classList.remove("invalid");
   $("setCurrency").value = settings.currency;
   $("setBreak").value = String(settings.defaultBreak);
 }
 
+// Language menu: one choice per entry in LANGUAGES (i18n.js), each written in its own language.
+$("setLanguage").innerHTML = LANGUAGES.map((l) => `<option value="${l.code}">${l.name}</option>`).join("");
+$("setLanguage").addEventListener("change", (e) => {
+  setLanguage(e.target.value);
+  fillSettings(); // re-shows the rate with the new decimal separator (14,95 ↔ 14.95)
+});
+
 $("setRate").addEventListener("input", (e) => {
-  const t = e.target.value;
-  const r = parseDecimal(t);
-  if (t.trim() === "") updateSettings({ rate: 0 });
+  const text = e.target.value;
+  const r = parseDecimal(text);
+  if (text.trim() === "") updateSettings({ rate: 0 });
   else if (r != null && r >= 0) updateSettings({ rate: r });
-  e.target.classList.toggle("invalid", t.trim() !== "" && r == null);
+  e.target.classList.toggle("invalid", text.trim() !== "" && r == null);
 });
 $("setCurrency").addEventListener("input", (e) => updateSettings({ currency: e.target.value.trim() }));
 $("setBreak").addEventListener("input", (e) => {
@@ -280,11 +288,11 @@ $("importFile").addEventListener("change", async (e) => {
   try {
     const r = importCsv(await file.text());
     const extra = [];
-    if (r.duplicates > 0) extra.push(`${r.duplicates} already present`);
-    if (r.badLines > 0) extra.push(`${r.badLines} unreadable lines`);
-    toast(`Imported ${r.added} shifts` + (extra.length ? ` (${extra.join(", ")})` : ""));
+    if (r.duplicates > 0) extra.push(t("alreadyPresent", r.duplicates));
+    if (r.badLines > 0) extra.push(t("unreadable", r.badLines));
+    toast(t("imported", r.added) + (extra.length ? ` (${extra.join(", ")})` : ""));
   } catch (err) {
-    toast("Import failed: " + err.message);
+    toast(t("importFailed") + err.message);
   }
 });
 
@@ -295,9 +303,9 @@ $("exportBtn").addEventListener("click", async () => {
   if (isIOS() && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file] });
-      toast(`Exported ${shifts.length} shifts`);
+      toast(t("exported", shifts.length));
     } catch (err) {
-      if (err.name !== "AbortError") toast("Export failed: " + err.message);
+      if (err.name !== "AbortError") toast(t("exportFailed") + err.message);
     }
     return;
   }
@@ -310,7 +318,7 @@ $("exportBtn").addEventListener("click", async () => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
-  toast(`Exported ${shifts.length} shifts`);
+  toast(t("exported", shifts.length));
 });
 
 // ---------------------------------------------------------------------------------
@@ -338,11 +346,11 @@ window.addEventListener("popstate", showView);
 // ---------------------------------------------------------------------------------
 let toastTimer;
 function toast(msg) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.hidden = false;
+  const el = $("toast");
+  el.textContent = msg;
+  el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
 }
 
 function isIOS() {
@@ -355,6 +363,7 @@ function isInstalled() {
 // ---------------------------------------------------------------------------------
 // Start-up
 // ---------------------------------------------------------------------------------
+applyTranslations();
 $("storageWarning").hidden = Store.available;
 
 // iPhone install tip, until dismissed or installed.

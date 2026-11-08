@@ -1,8 +1,10 @@
 <!doctype html>
 <!--
   Work Hours — web version (works on iPhone, Android and computers).
-  Files:  index.html (layout) · style.css (look) · model.js (data) · csv.js (import/export)
-          app.js (screens + buttons) · sw.js (offline support) · manifest.webmanifest (install info)
+  Files:  index.html (layout) · style.css (look) · i18n.js (translations) · model.js (data)
+          csv.js (import/export) · app.js (screens + buttons) · sw.js (offline support)
+          manifest.webmanifest (install info) · aide.html (French user guide)
+  Texts: elements marked data-i18n="key" get their text from i18n.js in the chosen language.
 -->
 <html lang="en">
 <head>
@@ -28,7 +30,7 @@
 <div id="home" class="view">
   <header class="topbar">
     <h1>Work Hours</h1>
-    <button class="icon-btn" id="openSettings" aria-label="Settings">
+    <button class="icon-btn" id="openSettings" data-i18n-aria="settings">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
     </button>
   </header>
@@ -36,50 +38,48 @@
   <div class="content">
     <!-- iPhone only, until dismissed: how to install -->
     <div id="installTip" class="card tip" hidden>
-      <p>Install it: tap <b>Share</b> <span aria-hidden="true">⎋</span> then <b>Add to Home Screen</b>. It then opens like a normal app and works offline.</p>
-      <button class="icon-btn small" id="dismissTip" aria-label="Dismiss">✕</button>
+      <p data-i18n-html="installTip"></p>
+      <button class="icon-btn small" id="dismissTip" data-i18n-aria="dismiss">✕</button>
     </div>
 
-    <div id="storageWarning" class="card warning" hidden>
-      This browser is blocking storage (Private Browsing?), so your shifts won't be saved.
-    </div>
+    <div id="storageWarning" class="card warning" data-i18n="storageWarning" hidden></div>
 
     <!-- Clock in / live timer / Clock out (filled by app.js) -->
     <section id="clockCard" class="card elevated clock"></section>
 
     <!-- Only shown while no hourly rate is set -->
-    <button id="rateReminder" class="card reminder" hidden>Set your hourly rate in Settings to see your earnings.</button>
+    <button id="rateReminder" class="card reminder" data-i18n="rateReminder" hidden></button>
 
     <!-- Week | Month | Year -->
-    <div class="segmented" role="group" aria-label="Period">
-      <button data-period="week">Week</button>
-      <button data-period="month">Month</button>
-      <button data-period="year">Year</button>
+    <div class="segmented" role="group" data-i18n-aria="period">
+      <button data-period="week" data-i18n="week"></button>
+      <button data-period="month" data-i18n="month"></button>
+      <button data-period="year" data-i18n="year"></button>
     </div>
 
     <!-- ◀ title ▶  (tap the title to jump back to today) -->
     <div class="period-nav">
-      <button class="icon-btn" id="prevPeriod" aria-label="Previous">
+      <button class="icon-btn" id="prevPeriod" data-i18n-aria="prev">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
       </button>
-      <button class="period-title" id="periodTitle" title="Back to today"></button>
-      <button class="icon-btn" id="nextPeriod" aria-label="Next">
+      <button class="period-title" id="periodTitle" data-i18n-title="backToToday"></button>
+      <button class="icon-btn" id="nextPeriod" data-i18n-aria="next">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
       </button>
     </div>
 
     <!-- Totals for the selected period -->
     <section class="card summary">
-      <div class="stat"><strong id="sumHours"></strong><span>Hours</span></div>
-      <div class="stat wide"><strong id="sumEarned"></strong><span>Earned</span></div>
-      <div class="stat"><strong id="sumCount"></strong><span>Shifts</span></div>
+      <div class="stat"><strong id="sumHours"></strong><span data-i18n="hours"></span></div>
+      <div class="stat wide"><strong id="sumEarned"></strong><span data-i18n="earned"></span></div>
+      <div class="stat"><strong id="sumCount"></strong><span data-i18n="shifts"></span></div>
     </section>
 
-    <p id="emptyMsg" class="empty" hidden>No shifts in this period.</p>
+    <p id="emptyMsg" class="empty" data-i18n="noShifts" hidden></p>
     <ul id="shiftList" class="shift-list"></ul>
   </div>
 
-  <button class="fab" id="addShift" aria-label="Add shift">
+  <button class="fab" id="addShift" data-i18n-aria="addShift">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
   </button>
 </div>
@@ -87,55 +87,49 @@
 <!-- ============================== SETTINGS SCREEN ============================== -->
 <div id="settings" class="view" hidden>
   <header class="topbar">
-    <button class="icon-btn" id="closeSettings" aria-label="Back">
+    <button class="icon-btn" id="closeSettings" data-i18n-aria="back">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
     </button>
-    <h1>Settings</h1>
+    <h1 data-i18n="settings"></h1>
   </header>
 
   <div class="content">
-    <h2>Pay</h2>
+    <!-- Language (choices come from LANGUAGES in i18n.js) -->
+    <label class="field"><span>🌐 <span data-i18n="language"></span></span>
+      <select id="setLanguage"></select>
+    </label>
+
+    <hr>
+    <h2 data-i18n="pay"></h2>
     <div class="row">
-      <label class="field grow"><span>Hourly rate</span>
-        <input id="setRate" inputmode="decimal" autocomplete="off" placeholder="e.g. 14,95">
+      <label class="field grow"><span data-i18n="hourlyRate"></span>
+        <input id="setRate" inputmode="decimal" autocomplete="off" data-i18n-placeholder="ratePlaceholder">
       </label>
-      <label class="field"><span>Currency</span>
+      <label class="field"><span data-i18n="currency"></span>
         <input id="setCurrency" maxlength="4" autocomplete="off">
       </label>
     </div>
-    <p class="hint">New shifts use this rate. Existing shifts keep the rate they were saved with; tap a shift to change it.</p>
-    <label class="field"><span>Default unpaid break (minutes)</span>
+    <p class="hint" data-i18n="rateHint"></p>
+    <label class="field"><span data-i18n="defaultBreak"></span>
       <input id="setBreak" inputmode="numeric" autocomplete="off">
     </label>
 
     <hr>
-    <h2>Data</h2>
-    <p class="hint">
-      Your shifts are saved <b>only on this device, in this browser</b>. Nobody else can see them.
-      On iPhone, add the app to your Home Screen so Safari doesn't clear the data,
-      and export a CSV now and then as a backup.
-    </p>
-    <p class="hint">
-      Import a CSV with columns: date, start, end, break minutes, rate, note. Only date, start and end
-      are required; ',' or ';' separators both work. Shifts that already exist are skipped.
-      Files exported from the Android app work here too.
-    </p>
+    <h2 data-i18n="data"></h2>
+    <p class="hint" data-i18n-html="dataPrivacy"></p>
+    <p class="hint" data-i18n="importHelp"></p>
     <div class="row">
-      <button class="btn filled" id="importBtn">Import CSV</button>
-      <button class="btn outlined" id="exportBtn">Export CSV</button>
+      <button class="btn filled" id="importBtn" data-i18n="importCsv"></button>
+      <button class="btn outlined" id="exportBtn" data-i18n="exportCsv"></button>
     </div>
     <input type="file" id="importFile" accept=".csv,text/csv,text/plain" hidden>
 
     <hr>
-    <a class="btn outlined" href="aide.html">Mode d'emploi (français)</a>
+    <a class="btn outlined" href="aide.html" data-i18n="guide"></a>
 
     <div class="card">
       <h3>Shyfter</h3>
-      <p class="small">
-        Shyfter's API only accepts keys created by an account admin, so automatic sync isn't available
-        with a regular employee login. Use Clock in / Clock out here alongside Shyfter,
-        or import a CSV export of your clockings.
-      </p>
+      <p class="small" data-i18n="shyfter"></p>
     </div>
   </div>
 </div>
@@ -144,28 +138,29 @@
 <dialog id="shiftDialog" aria-labelledby="dlgTitle">
   <form id="shiftForm" novalidate>
     <!-- autofocus here so opening the dialog doesn't pop up the keyboard / date picker -->
-    <h2 id="dlgTitle" tabindex="-1" autofocus>Add shift</h2>
-    <label class="field"><span>Date</span><input type="date" id="fDate" required></label>
+    <h2 id="dlgTitle" tabindex="-1" autofocus></h2>
+    <label class="field"><span data-i18n="date"></span><input type="date" id="fDate" required></label>
     <div class="row">
-      <label class="field"><span>Start</span><input type="time" id="fStart" required></label>
-      <label class="field"><span id="fEndLabel">End</span><input type="time" id="fEnd" required></label>
+      <label class="field"><span data-i18n="start"></span><input type="time" id="fStart" required></label>
+      <label class="field"><span id="fEndLabel"></span><input type="time" id="fEnd" required></label>
     </div>
     <div class="row">
-      <label class="field"><span>Break (min)</span><input id="fBreak" inputmode="numeric" autocomplete="off"></label>
-      <label class="field"><span id="fRateLabel">Rate (€/h)</span><input id="fRate" inputmode="decimal" autocomplete="off"></label>
+      <label class="field"><span data-i18n="breakMin"></span><input id="fBreak" inputmode="numeric" autocomplete="off"></label>
+      <label class="field"><span id="fRateLabel"></span><input id="fRate" inputmode="decimal" autocomplete="off"></label>
     </div>
-    <label class="field"><span>Note (optional)</span><input id="fNote" maxlength="200" autocomplete="off"></label>
+    <label class="field"><span data-i18n="note"></span><input id="fNote" maxlength="200" autocomplete="off"></label>
     <p id="fPreview" class="preview"></p>
-    <button type="button" class="btn text danger" id="fDelete">Delete shift</button>
+    <button type="button" class="btn text danger" id="fDelete"></button>
     <div class="dialog-actions">
-      <button type="button" class="btn text" id="fCancel">Cancel</button>
-      <button type="submit" class="btn text" id="fSave">Save</button>
+      <button type="button" class="btn text" id="fCancel" data-i18n="cancel"></button>
+      <button type="submit" class="btn text" id="fSave" data-i18n="save"></button>
     </div>
   </form>
 </dialog>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="i18n.js"></script>
 <script src="model.js"></script>
 <script src="csv.js"></script>
 <script src="app.js"></script>
