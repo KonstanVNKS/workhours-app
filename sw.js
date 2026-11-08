@@ -4,9 +4,9 @@
 // so an update you publish shows up the next time the app is opened.
 // ► If an update doesn't seem to arrive, bump the number in CACHE.
 // =====================================================================================
-const CACHE = "workhours-v1";
+const CACHE = "workhours-v2";
 const FILES = [
-  "./", "index.html", "style.css", "model.js", "csv.js", "app.js", "manifest.webmanifest",
+  "./", "index.html", "aide.html", "style.css", "model.js", "csv.js", "app.js", "manifest.webmanifest",
   "icons/icon.svg", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png",
 ];
 

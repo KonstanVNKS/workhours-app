@@ -107,6 +107,7 @@ hr { width: 100%; margin: 4px 0; border: 0; border-top: 1px solid var(--outline-
   font-size: 15px;
   font-weight: 600;
 }
+a.btn { text-decoration: none; }
 .btn.big { width: 100%; height: 56px; font-size: 17px; }
 .btn.filled { background: var(--primary); color: var(--on-primary); }
 .btn.outlined { border: 1px solid var(--outline); color: var(--primary); }
